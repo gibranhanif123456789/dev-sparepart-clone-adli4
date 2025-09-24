@@ -254,6 +254,7 @@
             </div>
         </div>
     </div>
+    @include('components.tracking-modal')
 @endsection
 
 @push('scripts')

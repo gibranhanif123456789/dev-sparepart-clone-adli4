@@ -79,26 +79,36 @@
                 </thead>
                 <tbody>
                     @foreach($requests as $req)
-                                <tr>
-                                    <td><span class="fw-bold">{{ $req->tiket }}</span></td>
-                                    <td>{{ $req->user->name ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge 
-                        @if($req->status_gudang == 'approved') bg-success
-                        @elseif($req->status_gudang == 'rejected') bg-danger
-                        @else bg-secondary
-                        @endif">
-                                            {{ $req->status_gudang == 'approved' ? 'Diterima' : ($req->status_gudang == 'rejected' ? 'Ditolak' : 'Unknown') }}
-                                        </span>
-                                    </td>
-                                    <td>{{ \Carbon\Carbon::parse($req->tanggal_permintaan)->format('Y-m-d') }}</td>
-                                    <td>
-                                        <button class="btn btn-info btn-sm btn-history" data-bs-toggle="modal"
-                                            data-bs-target="#modalHistory" data-tiket="{{ $req->tiket }}">
-                                            <i class="bi bi-clock-history"></i> History
-                                        </button>
-                                    </td>
-                                </tr>
+                        <tr>
+                            <td><span class="fw-bold">{{ $req->tiket }}</span></td>
+                            <td>{{ $req->user->name ?? '-' }}</td>
+                            <td class="d-flex align-items-center gap-2">
+                                <!-- Status Badge -->
+                                <span class="badge 
+                                    @if($req->status_gudang == 'approved') bg-success
+                                    @elseif($req->status_gudang == 'rejected') bg-danger
+                                    @else bg-secondary
+                                    @endif">
+                                    {{ $req->status_gudang == 'approved' ? 'Diterima' : ($req->status_gudang == 'rejected' ? 'Ditolak' : 'Pending') }}
+                                </span>
+
+                                <!-- 🔹 Ikon Mata - Tracking Approval -->
+                                <button 
+                                    type="button"
+                                    onclick="showStatusDetailModal('{{ $req->tiket }}', 'kepala_gudang')"
+                                    class="inline-flex items-center justify-center w-6 h-6 text-white bg-blue-600 hover:bg-blue-700 rounded-full transition focus:outline-none"
+                                    title="Lihat progres approval">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($req->tanggal_permintaan)->format('Y-m-d') }}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm btn-history" data-bs-toggle="modal"
+                                    data-bs-target="#modalHistory" data-tiket="{{ $req->tiket }}">
+                                    <i class="bi bi-clock-history"></i> History
+                                </button>
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -123,8 +133,8 @@
             </ul>
         </nav>
     </div>
-    </div>
 
+    <!-- ✅ Modal History (Bootstrap) -->
     <div class="modal fade" id="modalHistory" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -132,7 +142,6 @@
                     <h5 class="modal-title"><i class="bi bi-clock-history"></i> Detail History Barang</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
                     <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cart-check"></i> Data Request</h6>
                     <div class="mb-3">
@@ -140,7 +149,6 @@
                         <p><strong>Requester:</strong> <span id="modal-requester-display">-</span></p>
                         <p><strong>Tanggal Request:</strong> <span id="modal-tanggal-request-display">-</span></p>
                     </div>
-
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered">
                             <thead class="table-primary">
@@ -159,14 +167,11 @@
                             </tbody>
                         </table>
                     </div>
-
                     <hr>
-
                     <h6 class="fw-bold text-success mb-3"><i class="bi bi-truck"></i> Data Pengiriman</h6>
                     <div class="mb-3">
                         <p><strong>Tanggal Pengiriman:</strong> <span id="modal-tanggal-pengiriman-display">-</span></p>
                     </div>
-
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered">
                             <thead class="table-success">
@@ -188,15 +193,17 @@
                         </table>
                     </div>
                 </div>
-
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
-@endsection
 
+    <!-- ✅ Include Komponen Modal Tracking -->
+    @include('components.tracking-modal')
+
+@endsection
 
 @push('scripts')
     <script>
@@ -204,16 +211,15 @@
         const modalElement = document.getElementById('modalHistory');
         if (modalElement) {
             modalElement.addEventListener('hidden.bs.modal', function () {
-                // Hapus backdrop manual jika masih ada
                 const backdrop = document.querySelector('.modal-backdrop');
                 if (backdrop) {
                     backdrop.remove();
                 }
-                // Atau reset style body
                 document.body.style.overflow = '';
                 document.body.classList.remove('modal-open');
             });
         }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Highlight menu aktif
             const currentLocation = location.href;
@@ -238,6 +244,7 @@
                 document.querySelector('.sidebar').classList.toggle('show');
             });
         });
+
         // Load detail history saat modal dibuka
         document.querySelectorAll('.btn-history').forEach(button => {
             button.addEventListener('click', function () {
@@ -277,12 +284,12 @@
                             data.permintaan.details.forEach((item, index) => {
                                 const tr = document.createElement('tr');
                                 tr.innerHTML = `
-                                                        <td>${index + 1}</td>
-                                                        <td>${item.nama_item}</td>
-                                                        <td>${item.deskripsi || '-'}</td>
-                                                        <td>${item.jumlah}</td>
-                                                        <td>${item.keterangan || '-'}</td>
-                                                    `;
+                                    <td>${index + 1}</td>
+                                    <td>${item.nama_item}</td>
+                                    <td>${item.deskripsi || '-'}</td>
+                                    <td>${item.jumlah}</td>
+                                    <td>${item.keterangan || '-'}</td>
+                                `;
                                 requestTableBody.appendChild(tr);
                             });
                         } else {
@@ -294,21 +301,20 @@
                             document.getElementById('modal-tanggal-pengiriman-display').textContent = new Date(data.pengiriman.tanggal_transaksi)
                                 .toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
 
-                            // Isi tabel pengiriman
                             const pengirimanTableBody = document.getElementById('pengiriman-table-body');
                             pengirimanTableBody.innerHTML = '';
                             if (data.pengiriman.details && data.pengiriman.details.length > 0) {
                                 data.pengiriman.details.forEach((item, index) => {
                                     const tr = document.createElement('tr');
                                     tr.innerHTML = `
-                                                            <td>${index + 1}</td>
-                                                            <td>${item.nama_item}</td>
-                                                            <td>${item.merk || '-'}</td>
-                                                            <td>${item.sn || '-'}</td>
-                                                            <td>${item.tipe || '-'}</td>
-                                                            <td>${item.jumlah}</td>
-                                                            <td>${item.keterangan || '-'}</td>
-                                                        `;
+                                        <td>${index + 1}</td>
+                                        <td>${item.nama_item}</td>
+                                        <td>${item.merk || '-'}</td>
+                                        <td>${item.sn || '-'}</td>
+                                        <td>${item.tipe || '-'}</td>
+                                        <td>${item.jumlah}</td>
+                                        <td>${item.keterangan || '-'}</td>
+                                    `;
                                     pengirimanTableBody.appendChild(tr);
                                 });
                             } else {

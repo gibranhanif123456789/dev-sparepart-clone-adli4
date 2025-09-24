@@ -24,77 +24,83 @@ class KepalaROController extends Controller
         return view('kepalaro.dashboard', compact('requests'));
     }
 
-
     // History: Semua permintaan (disetujui/ditolak)
-  public function history(Request $request)
-{
-    $user = Auth::user();
+    public function history(Request $request)
+    {
+        $user = Auth::user();
 
-    $query = Permintaan::with(['user', 'details'])
-        ->whereHas('user', function($q) use ($user) {
-            $q->where('region', $user->region);
-        });
+        $query = Permintaan::with(['user', 'details'])
+            ->whereHas('user', function($q) use ($user) {
+                $q->where('region', $user->region);
+            });
 
-    // Filter 
-    if ($request->filled('status') && $request->status !== 'all') {
-        $query->where('status', $request->status);
+        // Filter 
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filter tanggal (created_at atau tanggal_permintaan)
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereBetween('tanggal_permintaan', [
+                $request->date_from,
+                $request->date_to
+            ]);
+        }
+
+        $requests = $query->orderByDesc('tanggal_permintaan')->get();
+
+        return view('kepalaro.history', compact('requests'))
+            ->with('filters', $request->only(['status', 'date_from', 'date_to']));
     }
-
-    // Filter tanggal (created_at atau tanggal_permintaan)
-    if ($request->filled('date_from') && $request->filled('date_to')) {
-        $query->whereBetween('tanggal_permintaan', [
-            $request->date_from,
-            $request->date_to
-        ]);
-    }
-
-   $requests = $query->orderByDesc('tanggal_permintaan')->get();
-
-
-    return view('kepalaro.history', compact('requests'))
-        ->with('filters', $request->only(['status', 'date_from', 'date_to']));
-}
 
     // Approve permintaan
     public function approve($id)
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    $request = Permintaan::where('id', $id)
-        ->whereHas('user', function($q) use ($user) {
-            $q->where('region', $user->region);
-        })
-        ->where('status_ro', 'pending')
-        ->firstOrFail();
+        $request = Permintaan::where('id', $id)
+            ->whereHas('user', function($q) use ($user) {
+                $q->where('region', $user->region);
+            })
+            ->where('status_ro', 'pending')
+            ->firstOrFail();
 
-    // ✅ Update status RO & status global
-    $request->update([
-        'status_ro' => 'approved',
-        'approved_by_ro' => Auth::id(),
-        'status' => 'pending', // Tetap pending, karena belum sampai ke Super Admin
-    ]);
+        // ✅ Update status RO
+        $request->status_ro = 'approved';
+        $request->approved_by_ro = Auth::id();
+        $request->status = 'pending'; // Tetap pending, karena belum sampai ke Super Admin
 
-    return redirect()->back()->with('success', 'Permintaan disetujui dan diteruskan!');
-}
+        // 🔥 SET NEXT STEP: Kepala Gudang → on progres
+        $request->status_gudang = 'on progres';
 
-// Reject permintaan
-public function reject($id)
-{
-    $user = Auth::user();
+        $request->save();
 
-    $request = Permintaan::where('id', $id)
-        ->whereHas('user', function($q) use ($user) {
-            $q->where('region', $user->region);
-        })
-        ->where('status_ro', 'pending')
-        ->firstOrFail();
+        return redirect()->back()->with('success', 'Permintaan disetujui dan diteruskan ke Kepala Gudang!');
+    }
 
-    // ✅ Update status RO & status global
-    $request->update([
-        'status_ro' => 'rejected',
-        'catatan_ro' => $request->catatan ?? 'Ditolak oleh Kepala RO',
-        ]);
+    // Reject permintaan
+    public function reject($id)
+    {
+        $user = Auth::user();
 
-    return redirect()->back()->with('success', 'Permintaan ditolak!');
-}
+        $request = Permintaan::where('id', $id)
+            ->whereHas('user', function($q) use ($user) {
+                $q->where('region', $user->region);
+            })
+            ->where('status_ro', 'pending')
+            ->firstOrFail();
+
+        // ✅ Update status RO
+        $request->status_ro = 'rejected';
+        $request->catatan_ro = $request->catatan_ro ?? 'Ditolak oleh Kepala RO';
+
+        // 🔥 BROADCAST REJECTED KE SEMUA LEVEL
+        $request->status_gudang = 'rejected';
+        $request->status_admin = 'rejected';
+        $request->status_super_admin = 'rejected';
+
+        $request->save();
+
+        return redirect()->back()->with('error', 'Permintaan ditolak dan proses dihentikan.');
+    }
 }

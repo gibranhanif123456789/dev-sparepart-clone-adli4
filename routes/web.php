@@ -13,7 +13,7 @@ use App\Http\Controllers\KepalaROController;
 use App\Http\Controllers\DataController;
 use App\Http\Controllers\PengirimanController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\ApprovalStatusController;
 
 
 require __DIR__ . '/auth.php';
@@ -194,6 +194,9 @@ Route::prefix('requestbarang')
         Route::get('/{tiket}', 'getDetail')->name('detail');
         Route::post('/', 'store')->name('store');
 
+        Route::get('/requestbarang/api/permintaan/{tiket}/status', [ApprovalStatusController::class, 'getStatus'])->name('api.permintaan.status');
+// ✅ Cukup satu ini saja
+Route::get('/api/permintaan/{tiket}/status', [ApprovalStatusController::class, 'getStatus'])->name('api.permintaan.status');
         // 🔥 API: Detail Status Approval Berjenjang
         Route::get('/api/permintaan/{tiket}/status', function ($tiket) {
             $permintaan = \App\Models\Permintaan::where('tiket', $tiket)->firstOrFail();

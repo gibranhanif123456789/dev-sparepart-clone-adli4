@@ -12,50 +12,46 @@
         this.showDetailModal = true;
     }
 }">
-<div class="py-8 px-6">
-    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Histori Permintaan</h2>
-
-    <!-- Filter Form -->
-    <form method="GET" action="{{ route('kepalaro.history') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
-        <!-- Status -->
-        <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select name="status" id="status" class="w-full border-gray-300 rounded-lg">
-                <option value="all" {{ ($filters['status'] ?? '') == 'all' ? 'selected' : '' }}>Semua</option>
-                <option value="pending" {{ ($filters['status'] ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="diterima" {{ ($filters['status'] ?? '') == 'diterima' ? 'selected' : '' }}>Diterima</option>
-                <option value="ditolak" {{ ($filters['status'] ?? '') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
-            </select>
-        </div>
-
-        <!-- Dari tanggal -->
-        <div>
-            <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
-            <input type="date" name="date_from" id="date_from"
-                   value="{{ $filters['date_from'] ?? '' }}"
-                   class="w-full border-gray-300 rounded-lg">
-        </div>
-
-        <!-- Sampai tanggal -->
-        <div>
-            <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
-            <input type="date" name="date_to" id="date_to"
-                   value="{{ $filters['date_to'] ?? '' }}"
-                   class="w-full border-gray-300 rounded-lg">
-        </div>
-
-        <!-- Tombol -->
-        <div class="flex items-end gap-2">
-            <button type="submit"
-                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Filter</button>
-            <a href="{{ route('kepalaro.history') }}"
-                class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Reset</a>
-        </div>
-    </form>
-
-
     <div class="py-8 px-6">
         <h2 class="text-2xl font-semibold mb-6 text-gray-800">Histori Permintaan</h2>
+
+        <!-- Filter Form -->
+        <form method="GET" action="{{ route('kepalaro.history') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
+            <!-- Status -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" id="status" class="w-full border-gray-300 rounded-lg">
+                    <option value="all" {{ ($filters['status'] ?? '') == 'all' ? 'selected' : '' }}>Semua</option>
+                    <option value="pending" {{ ($filters['status'] ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="diterima" {{ ($filters['status'] ?? '') == 'diterima' ? 'selected' : '' }}>Diterima</option>
+                    <option value="ditolak" {{ ($filters['status'] ?? '') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                </select>
+            </div>
+
+            <!-- Dari tanggal -->
+            <div>
+                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                <input type="date" name="date_from" id="date_from"
+                       value="{{ $filters['date_from'] ?? '' }}"
+                       class="w-full border-gray-300 rounded-lg">
+            </div>
+
+            <!-- Sampai tanggal -->
+            <div>
+                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                <input type="date" name="date_to" id="date_to"
+                       value="{{ $filters['date_to'] ?? '' }}"
+                       class="w-full border-gray-300 rounded-lg">
+            </div>
+
+            <!-- Tombol -->
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Filter</button>
+                <a href="{{ route('kepalaro.history') }}"
+                    class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Reset</a>
+            </div>
+        </form>
 
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
@@ -74,14 +70,28 @@
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">#{{ $req->id }}</td>
                             <td class="px-6 py-4 text-sm">{{ $req->user?->name ?? 'Tidak Diketahui' }}</td>
                             <td class="px-6 py-4 text-sm">{{ \Carbon\Carbon::parse($req->tanggal_permintaan)->format('d M Y') }}</td>
-                            <td class="px-6 py-4 text-sm">
+                            
+                            <!-- 🔹 Kolom STATUS: Badge + Ikon Mata -->
+                            <td class="px-6 py-4 text-sm flex items-center space-x-2">
+                                <!-- Status Badge -->
                                 <span class="px-2 py-1 text-xs rounded-full
                                     @if($req->status == 'diterima') bg-green-100 text-green-800
                                     @elseif($req->status == 'ditolak') bg-red-100 text-red-800
                                     @else bg-gray-100 text-gray-800 @endif">
                                     {{ ucfirst($req->status) }}
                                 </span>
+
+                                <!-- Ikon Mata - Tracking Approval -->
+                                <button 
+                                    type="button"
+                                    onclick="showStatusDetailModal('{{ $req->tiket }}', 'kepala_ro')"
+                                    class="inline-flex items-center justify-center w-6 h-6 text-white bg-blue-600 hover:bg-blue-700 rounded-full transition duration-200 ease-in-out shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    title="Lihat progres approval">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
                             </td>
+
+                            <!-- 🔹 Kolom AKSI: Hanya Tombol Detail -->
                             <td class="px-6 py-4 text-sm">
                                 <button @click="openDetail({{ json_encode([
                                     'tiket' => $req->tiket,
@@ -93,7 +103,7 @@
                                     'details' => $req->details
                                 ]) }})"
                                         class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium">
-                                    Detail
+                                    <i class="fas fa-info-circle me-1"></i> Detail
                                 </button>
                             </td>
                         </tr>
@@ -107,7 +117,7 @@
         </div>
     </div>
 
-    <!-- Modal Detail -->
+    <!-- Modal Detail (Alpine) -->
     <div x-show="showDetailModal"
          x-transition
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -192,4 +202,8 @@
         </div>
     </div>
 </div>
+
+<!-- ✅ Include Komponen Modal Tracking -->
+@include('components.tracking-modal')
+
 @endsection

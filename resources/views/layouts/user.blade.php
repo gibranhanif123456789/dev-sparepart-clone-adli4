@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'User - Aplikasi Spare Part')</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -14,7 +17,8 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         .font-sans {
             font-family: 'Figtree', sans-serif;
@@ -144,5 +148,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function waitForAlpine(callback) {
+        const check = setInterval(() => {
+            if (window.Alpine) {
+                clearInterval(check);
+                callback();
+            }
+        }, 100);
+    }
+
+    waitForAlpine(() => {
+        console.log('Alpine.js siap digunakan');
+        // Bisa trigger event custom kalau mau
+        document.dispatchEvent(new Event('alpine:ready'));
+    });
+</script>
+
 </body>
 </html>

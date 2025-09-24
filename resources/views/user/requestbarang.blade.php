@@ -36,7 +36,7 @@
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700">Sampai</label>
-            <input type="date" name="end_date" value="{{ request('end_date') }}"
+            <input type="date" name="end_date" value="{{ request('start_date') }}"
                    class="border-gray-300 rounded-md shadow-sm text-sm">
         </div>
 
@@ -208,12 +208,18 @@
     </div>
 
     <!-- Modal Detail -->
-    <div x-data="{ showDetail: false }" x-show="showDetail" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+    <div x-data="{ showDetail: false }"
+         x-show="showDetail"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         aria-labelledby="modal-title"
+         role="dialog"
+         aria-modal="true">
         <div class="flex items-center justify-center min-h-screen">
             <div class="bg-black bg-opacity-50 absolute inset-0" @click="showDetail = false"></div>
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 z-10">
                 <div class="modal-header bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
-                    <h5 class="text-lg font-semibold">Detail Request</h5>
+                    <h5 id="modal-title" class="text-lg font-semibold">Detail Request</h5>
                     <button @click="showDetail = false" class="text-white hover:text-gray-200">
                         <i class="fas fa-times"></i>
                     </button>
@@ -265,97 +271,22 @@
         </div>
     </div>
 
-    <!-- Modal Detail Approval Berjenjang -->
-    <div x-data="{ showStatusDetail: false, status: {}, role: 'user' }"
-         x-show="showStatusDetail"
-         x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto"
-         style="display: none;"
-         id="status-detail-modal">
+    <!-- ✅ MODAL BARU: TRACKING STATUS (Vanilla JS) -->
+    <div id="statusModal" class="fixed inset-0 z-50 overflow-y-auto hidden">
         <div class="flex items-center justify-center min-h-screen">
-            <div class="bg-black bg-opacity-50 absolute inset-0" @click="showStatusDetail = false"></div>
+            <div class="bg-black bg-opacity-50 absolute inset-0" onclick="closeStatusModal()"></div>
             <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 z-10">
                 <div class="modal-header bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
                     <h5 class="text-lg font-semibold">Detail Progres Approval</h5>
-                    <button @click="showStatusDetail = false" class="text-white hover:text-gray-200">
+                    <button onclick="closeStatusModal()" class="text-white hover:text-gray-200">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div class="p-6">
-                    <div class="space-y-4 text-sm">
-                        <!-- Kepala RO -->
-                        <template x-if="['user'].includes(role)">
-                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded">
-                                <span class="font-medium">Kepala RO</span>
-                                <span :class="{
-                                    'bg-yellow-100 text-yellow-800': status.ro === 'pending',
-                                    'bg-green-100 text-green-800': status.ro === 'approved',
-                                    'bg-red-100 text-red-800': status.ro === 'rejected'
-                                }" class="px-3 py-1 rounded-full text-xs font-medium">
-                                    <template x-if="status.ro === 'pending'">Pending</template>
-                                    <template x-if="status.ro === 'approved'">Disetujui</template>
-                                    <template x-if="status.ro === 'rejected'">Ditolak</template>
-                                </span>
-                            </div>
-                        </template>
-
-                        <!-- Kepala Gudang -->
-                        <template x-if="['user', 'kepala_ro'].includes(role)">
-                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded">
-                                <span class="font-medium">Kepala Gudang</span>
-                                <span :class="{
-                                    'bg-yellow-100 text-yellow-800': status.gudang === 'pending',
-                                    'bg-green-100 text-green-800': status.gudang === 'approved',
-                                    'bg-red-100 text-red-800': status.gudang === 'rejected'
-                                }" class="px-3 py-1 rounded-full text-xs font-medium">
-                                    <template x-if="status.gudang === 'pending'">Pending</template>
-                                    <template x-if="status.gudang === 'approved'">Disetujui</template>
-                                    <template x-if="status.gudang === 'rejected'">Ditolak</template>
-                                </span>
-                            </div>
-                        </template>
-
-                        <!-- Admin -->
-                        <template x-if="['user', 'kepala_ro', 'kepala_gudang'].includes(role)">
-                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded">
-                                <span class="font-medium">Admin</span>
-                                <span :class="{
-                                    'bg-yellow-100 text-yellow-800': status.admin === 'pending',
-                                    'bg-green-100 text-green-800': status.admin === 'approved',
-                                    'bg-red-100 text-red-800': status.admin === 'rejected'
-                                }" class="px-3 py-1 rounded-full text-xs font-medium">
-                                    <template x-if="status.admin === 'pending'">Pending</template>
-                                    <template x-if="status.admin === 'approved'">Disetujui</template>
-                                    <template x-if="status.admin === 'rejected'">Ditolak</template>
-                                </span>
-                            </div>
-                        </template>
-
-                        <!-- Super Admin -->
-                        <template x-if="['user', 'kepala_ro', 'kepala_gudang', 'admin'].includes(role)">
-                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded">
-                                <span class="font-medium">Super Admin</span>
-                                <span :class="{
-                                    'bg-yellow-100 text-yellow-800': status.super_admin === 'pending',
-                                    'bg-green-100 text-green-800': status.super_admin === 'approved',
-                                    'bg-red-100 text-red-800': status.super_admin === 'rejected'
-                                }" class="px-3 py-1 rounded-full text-xs font-medium">
-                                    <template x-if="status.super_admin === 'pending'">Pending</template>
-                                    <template x-if="status.super_admin === 'approved'">Disetujui</template>
-                                    <template x-if="status.super_admin === 'rejected'">Ditolak</template>
-                                </span>
-                            </div>
-                        </template>
-
-                        <!-- Catatan Jika Ditolak -->
-                        <div class="mt-4 text-sm" x-show="status.catatan">
-                            <strong>Catatan:</strong>
-                            <p x-text="status.catatan" class="text-gray-600 mt-1"></p>
-                        </div>
-                    </div>
+                <div class="p-6" id="statusModalBody">
+                    <!-- Isi akan diisi oleh JS -->
                 </div>
                 <div class="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end">
-                    <button @click="showStatusDetail = false" class="btn btn-secondary bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md text-sm">
+                    <button onclick="closeStatusModal()" class="btn btn-secondary bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md text-sm">
                         Tutup
                     </button>
                 </div>
@@ -380,9 +311,7 @@
             const selectNama = firstRow.querySelector('select[name*="[nama]"]');
             const selectTipe = firstRow.querySelector('select[name*="[deskripsi]"]');
 
-            // Pastikan elemen ada
             if (selectKategori && selectNama && selectTipe) {
-                // Pasang event listener agar reaktif saat ganti kategori
                 selectKategori.addEventListener('change', () => {
                     loadItemsByKategori(selectKategori, selectNama);
                     loadTipeByKategoriAndJenis(selectKategori, selectNama, selectTipe);
@@ -392,7 +321,6 @@
                     loadTipeByKategoriAndJenis(selectKategori, selectNama, selectTipe);
                 });
 
-                // Isi dropdown saat halaman dimuat jika kategori sudah dipilih
                 if (selectKategori.value) {
                     loadItemsByKategori(selectKategori, selectNama);
                 }
@@ -400,29 +328,22 @@
         });
 
         function closeDetailModal() {
-            const modal = document.getElementById('detail-modal') || document.querySelector('[x-show="showDetail"]');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            const modal = document.querySelector('[x-show="showDetail"]');
+            if (modal) modal.style.display = 'none';
             const alpineEl = document.querySelector('[x-data]');
-            if (alpineEl && alpineEl.__x) {
-                alpineEl.__x.$data.showDetail = false;
-            }
+            if (alpineEl && alpineEl.__x) alpineEl.__x.$data.showDetail = false;
         }
 
-        // Load nama item berdasarkan kategori
         async function loadItemsByKategori(selectKategori, targetSelect) {
             const kategori = selectKategori.value;
             if (!kategori) return;
-
             try {
                 const response = await fetch(`/requestbarang/api/jenis-barang?kategori=${kategori}`);
                 const items = await response.json();
-
                 targetSelect.innerHTML = '<option value="">Pilih Item</option>';
                 items.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = item.id;  // Simpan ID untuk ambil tipe nanti
+                    option.value = item.id;
                     option.textContent = item.nama;
                     targetSelect.appendChild(option);
                 });
@@ -432,20 +353,16 @@
             }
         }
 
-        // Load tipe/deskripsi berdasarkan kategori DAN jenis_id
         async function loadTipeByKategoriAndJenis(selectKategori, selectJenis, targetSelect) {
             const kategori = selectKategori.value;
-            const jenisId = selectJenis.value; // ambil dari <select nama>
-
+            const jenisId = selectJenis.value;
             if (!kategori || !jenisId) {
                 targetSelect.innerHTML = '<option value="">Pilih Tipe</option>';
                 return;
             }
-
             try {
                 const response = await fetch(`/requestbarang/api/tipe-barang?kategori=${kategori}&jenis_id=${jenisId}`);
                 const tipes = await response.json();
-
                 targetSelect.innerHTML = '<option value="">Pilih Tipe</option>';
                 tipes.forEach(tipe => {
                     const option = document.createElement('option');
@@ -464,7 +381,6 @@
             const tbody = document.getElementById('request-table-body');
             const row = document.createElement('tr');
             row.classList.add('hover:bg-gray-50', 'transition-colors');
-
             row.innerHTML = `
                 <td class="px-4 py-3 text-sm text-center border border-gray-300 bg-gray-50 font-mono">${noRow}</td>
                 <td class="border border-gray-300">
@@ -501,19 +417,15 @@
             const selectNama = row.querySelector('select[name*="[nama]"]');
             const selectTipe = row.querySelector('select[name*="[deskripsi]"]');
 
-            // Saat kategori berubah → isi dropdown "Nama Item"
             selectKategori.addEventListener('change', () => {
                 loadItemsByKategori(selectKategori, selectNama);
-                // Reset tipe saat kategori berubah
                 selectTipe.innerHTML = '<option value="">Pilih Tipe</option>';
             });
 
-            // Saat nama item (jenis) berubah → isi dropdown "Tipe" berdasarkan kategori + jenis
             selectNama.addEventListener('change', () => {
                 loadTipeByKategoriAndJenis(selectKategori, selectNama, selectTipe);
             });
 
-            // Muat awal jika perlu
             if (selectKategori.value) {
                 loadItemsByKategori(selectKategori, selectNama);
             }
@@ -525,9 +437,7 @@
             const rows = document.querySelectorAll('#request-table-body tr');
             rows.forEach((row, index) => {
                 const noCell = row.cells[0];
-                if (noCell) {
-                    noCell.textContent = index + 1;
-                }
+                if (noCell) noCell.textContent = index + 1;
             });
             noRow = rows.length;
         }
@@ -590,26 +500,65 @@
             noRow = 1;
         }
 
+        // ✅ Fungsi Baru: Tampilkan Modal Tracking Status
         function showStatusDetailModal(tiket, userRole) {
-            console.log("Mengambil detail untuk tiket:", tiket);
+            const modal = document.getElementById('statusModal');
+            const modalBody = document.getElementById('statusModalBody');
+
+            // Loading
+            modalBody.innerHTML = '<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat status...</p>';
+            modal.classList.remove('hidden');
+
             fetch(`/requestbarang/api/permintaan/${tiket}/status`)
                 .then(response => {
-                    if (!response.ok) throw new Error('Not Found');
+                    if (!response.ok) throw new Error('Tiket tidak ditemukan');
                     return response.json();
                 })
                 .then(data => {
-                    console.log("Data diterima:", data);
-                    const modal = document.querySelector('#status-detail-modal');
-                    if (modal && modal.__x) {
-                        modal.__x.$data.status = data;
-                        modal.__x.$data.role = userRole;
-                        modal.__x.$data.showStatusDetail = true;
+                    let html = '<ul class="space-y-2">';
+
+                    const roles = [
+                        { key: 'ro', label: 'Kepala RO' },
+                        { key: 'gudang', label: 'Kepala Gudang' },
+                        { key: 'admin', label: 'Admin' },
+                        { key: 'super_admin', label: 'Super Admin' }
+                    ];
+
+                    roles.forEach(r => {
+                        let badgeClass = 'bg-gray-100 text-gray-800';
+                        if (data[r.key] === 'approved') badgeClass = 'bg-green-100 text-green-800';
+                        else if (data[r.key] === 'rejected') badgeClass = 'bg-red-100 text-red-800';
+                        else if (data[r.key] === 'pending') badgeClass = 'bg-yellow-100 text-yellow-800';
+
+                        html += `
+                            <li class="flex justify-between items-center p-3 border border-gray-200 rounded">
+                                <span class="font-medium">${r.label}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${badgeClass}">
+                                    ${formatStatus(data[r.key])}
+                                </span>
+                            </li>`;
+                    });
+
+                    html += '</ul>';
+
+                    if (data.catatan) {
+                        html += `<p class="mt-4 text-sm"><strong>Catatan:</strong> ${data.catatan}</p>`;
                     }
+
+                    modalBody.innerHTML = html;
                 })
                 .catch(err => {
-                    console.error("Error:", err);
-                    alert('Gagal muat detail status approval. Cek koneksi atau login ulang.');
+                    modalBody.innerHTML = `<p class="text-red-600">${err.message}</p>`;
                 });
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+        }
+
+        function formatStatus(status) {
+            const map = { pending: 'Pending', approved: 'Disetujui', rejected: 'Ditolak' };
+            return map[status] || status;
         }
 
         function showDetail(tiket) {
@@ -671,4 +620,5 @@
                 });
         }
     </script>
+    @include('components.tracking-modal')
 @endsection

@@ -70,7 +70,7 @@ class KepalaGudangController extends Controller
     public function requestIndex()
     {
         $requests = Permintaan::where('status_ro', 'approved')
-            ->where('status_gudang', 'pending')
+           ->whereIn('status_gudang', ['pending', 'on progres'])
             ->with(['user', 'details']) // Load relasi jika diperlukan
             ->orderBy('tanggal_permintaan', 'desc')
             ->get();
