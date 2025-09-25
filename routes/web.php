@@ -194,26 +194,8 @@ Route::prefix('requestbarang')
         Route::get('/{tiket}', 'getDetail')->name('detail');
         Route::post('/', 'store')->name('store');
 
-        Route::get('/requestbarang/api/permintaan/{tiket}/status', [ApprovalStatusController::class, 'getStatus'])->name('api.permintaan.status');
 // ✅ Cukup satu ini saja
 Route::get('/api/permintaan/{tiket}/status', [ApprovalStatusController::class, 'getStatus'])->name('api.permintaan.status');
-        // 🔥 API: Detail Status Approval Berjenjang
-        Route::get('/api/permintaan/{tiket}/status', function ($tiket) {
-            $permintaan = \App\Models\Permintaan::where('tiket', $tiket)->firstOrFail();
-
-            return response()->json([
-                'ro' => $permintaan->status_ro,
-                'gudang' => $permintaan->status_gudang,
-                'admin' => $permintaan->status_admin,
-                'super_admin' => $permintaan->status_super_admin,
-                'catatan' => collect([
-                    $permintaan->catatan_ro,
-                    $permintaan->catatan_gudang,
-                    $permintaan->catatan_admin,
-                    $permintaan->catatan_super_admin,
-                ])->filter()->first(),
-            ]);
-        })->name('api.permintaan.status');
 
         // ✅ API: Ambil jenis barang berdasarkan kategori
         Route::get('/api/jenis-barang', function (\Illuminate\Http\Request $request) {

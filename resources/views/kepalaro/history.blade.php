@@ -73,13 +73,18 @@
                             
                             <!-- 🔹 Kolom STATUS: Badge + Ikon Mata -->
                             <td class="px-6 py-4 text-sm flex items-center space-x-2">
-                                <!-- Status Badge -->
-                                <span class="px-2 py-1 text-xs rounded-full
-                                    @if($req->status == 'diterima') bg-green-100 text-green-800
-                                    @elseif($req->status == 'ditolak') bg-red-100 text-red-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ ucfirst($req->status) }}
-                                </span>
+                               <!-- Status Badge: Berdasarkan status_ro -->
+<span class="px-2 py-1 text-xs rounded-full
+    @if($req->status_ro === 'approved') bg-green-100 text-green-800
+    @elseif($req->status_ro === 'rejected') bg-red-100 text-red-800
+    @elseif($req->status_ro === 'on progres') bg-yellow-100 text-yellow-800
+    @else bg-gray-100 text-gray-800 @endif">
+    {{
+        $req->status_ro === 'approved' ? 'Disetujui' :
+        ($req->status_ro === 'rejected' ? 'Ditolak' :
+        ($req->status_ro === 'on progres' ? 'On Progress' : 'Pending'))
+    }}
+</span>
 
                                 <!-- Ikon Mata - Tracking Approval -->
                                 <button 

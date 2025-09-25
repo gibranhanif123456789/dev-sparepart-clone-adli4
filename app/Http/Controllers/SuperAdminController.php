@@ -92,43 +92,38 @@ class SuperAdminController extends Controller
     return view('superadmin.request', compact('requests'));
 }
 
-    public function historyIndex(Request $request)
-    {
-        $query = Permintaan::with(['user', 'details', 'pengiriman'])
-            ->where(function ($q) {
+public function historyIndex(Request $request)
+{
+    $user = Auth::user();
+
+    $query = Permintaan::with(['user', 'details', 'pengiriman.details'])
+        ->where(function ($q) use ($user) {
+            // Untuk Admin (ID 15): tampilkan yang dia approve/reject
+            if ($user->id === 15) {
+                $q->where('status_admin', 'approved')
+                  ->orWhere('status_admin', 'rejected');
+            }
+            // Untuk Super Admin (ID 16): tampilkan yang dia approve/reject
+            elseif ($user->id === 16) {
                 $q->where('status_super_admin', 'approved')
-                    ->orWhere('status_super_admin', 'rejected')
-                    ->orWhere('status_barang', 'diproses')
-                    ->orWhere('status_gudang', 'dikirim');
-            })
-            ->orderBy('tanggal_permintaan', 'desc');
+                  ->orWhere('status_super_admin', 'rejected');
+            }
+        })
+        ->orWhereHas('pengiriman') // atau sudah dikirim
+        ->orderByDesc('tanggal_permintaan');
 
-        if ($request->filled('dateFrom')) {
-            $query->whereDate('tanggal_permintaan', '>=', $request->input('dateFrom'));
-        }
-        if ($request->filled('dateTo')) {
-            $query->whereDate('tanggal_permintaan', '<=', $request->input('dateTo'));
-        }
-        if ($request->filled('statusFilter')) {
-            $status = $request->input('statusFilter');
-            $query->where(function ($q) use ($status) {
-                if ($status === 'diterima') {
-                    $q->where('status_super_admin', 'approved');
-                } elseif ($status === 'ditolak') {
-                    $q->where('status_super_admin', 'rejected');
-                } elseif ($status === 'diproses') {
-                    $q->where('status_barang', 'diproses');
-                } elseif ($status === 'dikirim') {
-                    $q->where('status_gudang', 'dikirim');
-                }
-            });
-        }
-
-        $requests = $query->paginate(10)->withQueryString();
-
-        return view('superadmin.history', compact('requests'));
+    // Filter tanggal
+    if ($request->filled('dateFrom')) {
+        $query->whereDate('tanggal_permintaan', '>=', $request->input('dateFrom'));
+    }
+    if ($request->filled('dateTo')) {
+        $query->whereDate('tanggal_permintaan', '<=', $request->input('dateTo'));
     }
 
+    $requests = $query->distinct()->paginate(10)->withQueryString();
+
+    return view('superadmin.history', compact('requests'));
+}
     /**
      * Approve oleh Admin (Mbak Inong) atau Super Admin (Mas Septian)
      */
@@ -274,7 +269,8 @@ class SuperAdminController extends Controller
     }
 
     public function historyDetailApi($tiket)
-    {
+{
+    try {
         $permintaan = Permintaan::with(['user', 'details', 'pengiriman.details'])
             ->where('tiket', $tiket)
             ->firstOrFail();
@@ -291,5 +287,8 @@ class SuperAdminController extends Controller
                 'details' => $permintaan->pengiriman->details
             ] : null
         ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Data tidak ditemukan'], 404);
     }
+}
 }

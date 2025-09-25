@@ -71,27 +71,29 @@
                             <td class="px-4 py-3 text-sm">{{ $index + 1 }}</td>
                             <td class="px-4 py-3 text-sm font-medium text-blue-600">{{ $p->tiket }}</td>
                             <td class="px-4 py-3 text-sm">{{ \Carbon\Carbon::parse($p->tanggal_permintaan)->translatedFormat('l, d F Y') }}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <div class="flex items-center space-x-2">
-                                    <!-- Status Badge -->
-                                    @if ($p->status === 'diterima')
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Diterima</span>
-                                    @elseif ($p->status === 'ditolak')
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Ditolak</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Pending</span>
-                                    @endif
+                           <td class="px-4 py-3 text-sm">
+    <div class="flex items-center space-x-2">
+        <!-- Status Badge: Berdasarkan status_ro karena ini step pertama -->
+        @if ($p->status_ro === 'approved')
+            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Disetujui</span>
+        @elseif ($p->status_ro === 'rejected')
+            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Ditolak</span>
+        @elseif ($p->status_ro === 'on progres')
+            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">On Progress</span>
+        @else
+            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Pending</span>
+        @endif
 
-                                    <!-- Ikon Mata untuk Detail Approval -->
-                                    <button 
-                                        type="button"
-                                        onclick="showStatusDetailModal('{{ $p->tiket }}', 'user')"
-                                        class="text-blue-600 hover:text-blue-800 focus:outline-none"
-                                        title="Lihat detail progres approval">
-                                        <i class="fas fa-eye text-sm"></i>
-                                    </button>
-                                </div>
-                            </td>
+        <!-- Ikon Mata - Tracking Approval -->
+        <button 
+            type="button"
+            onclick="showStatusDetailModal('{{ $p->tiket }}', 'user')"
+            class="text-blue-600 hover:text-blue-800 focus:outline-none"
+            title="Lihat detail progres approval">
+            <i class="fas fa-eye text-sm"></i>
+        </button>
+    </div>
+</td>
                             <td class="px-4 py-3 text-sm">
                                 <button onclick="showDetail('{{ $p->tiket }}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                     <i class="fas fa-eye me-1"></i> Detail

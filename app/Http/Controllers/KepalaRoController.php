@@ -10,19 +10,19 @@ class KepalaROController extends Controller
 {
     // Dashboard: Daftar permintaan menunggu approval
     public function index()
-    {
-        $user = Auth::user(); // Kepala RO login
+{
+    $user = Auth::user();
 
-        $requests = Permintaan::with(['user', 'details'])
-            ->where('status', 'pending')
-            ->where('status_ro', '!=', 'approved')
-            ->whereHas('user', function($q) use ($user) {
-                $q->where('region', $user->region); // filter berdasarkan region
-            })
-            ->get();
+    $requests = Permintaan::with(['user', 'details'])
+        ->where('status', 'pending')
+        ->where('status_ro', 'on progres') // ✅ Hanya tampilkan yang belum diproses
+        ->whereHas('user', function($q) use ($user) {
+            $q->where('region', $user->region);
+        })
+        ->get();
 
-        return view('kepalaro.dashboard', compact('requests'));
-    }
+    return view('kepalaro.dashboard', compact('requests'));
+}
 
     // History: Semua permintaan (disetujui/ditolak)
     public function history(Request $request)
@@ -55,52 +55,50 @@ class KepalaROController extends Controller
 
     // Approve permintaan
     public function approve($id)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $request = Permintaan::where('id', $id)
-            ->whereHas('user', function($q) use ($user) {
-                $q->where('region', $user->region);
-            })
-            ->where('status_ro', 'pending')
-            ->firstOrFail();
+    $request = Permintaan::where('id', $id)
+        ->whereHas('user', function($q) use ($user) {
+            $q->where('region', $user->region);
+        })
+        ->where('status_ro', 'on progres') // ✅ Ganti dari 'pending' ke 'on progres'
+        ->firstOrFail();
 
-        // ✅ Update status RO
-        $request->status_ro = 'approved';
-        $request->approved_by_ro = Auth::id();
-        $request->status = 'pending'; // Tetap pending, karena belum sampai ke Super Admin
+    // Update status
+    $request->status_ro = 'approved';
+    $request->approved_by_ro = Auth::id();
+    $request->status = 'pending';
+    $request->status_gudang = 'on progres'; // next step
 
-        // 🔥 SET NEXT STEP: Kepala Gudang → on progres
-        $request->status_gudang = 'on progres';
+    $request->save();
 
-        $request->save();
-
-        return redirect()->back()->with('success', 'Permintaan disetujui dan diteruskan ke Kepala Gudang!');
-    }
-
+    return redirect()->back()->with('success', 'Permintaan disetujui dan diteruskan ke Kepala Gudang!');
+}
     // Reject permintaan
-    public function reject($id)
-    {
-        $user = Auth::user();
+   // Di KepalaROController.php - fungsi reject()
 
-        $request = Permintaan::where('id', $id)
-            ->whereHas('user', function($q) use ($user) {
-                $q->where('region', $user->region);
-            })
-            ->where('status_ro', 'pending')
-            ->firstOrFail();
+public function reject($id)
+{
+    $user = Auth::user();
 
-        // ✅ Update status RO
-        $request->status_ro = 'rejected';
-        $request->catatan_ro = $request->catatan_ro ?? 'Ditolak oleh Kepala RO';
+    $request = Permintaan::where('id', $id)
+        ->whereHas('user', function($q) use ($user) {
+            $q->where('region', $user->region);
+        })
+        ->where('status_ro', 'on progres') // ✅ Sama seperti approve
+        ->firstOrFail();
 
-        // 🔥 BROADCAST REJECTED KE SEMUA LEVEL
-        $request->status_gudang = 'rejected';
-        $request->status_admin = 'rejected';
-        $request->status_super_admin = 'rejected';
+    // Update status
+    $request->status_ro = 'rejected';
+    $request->catatan_ro = request()->catatan ?? 'Ditolak oleh Kepala RO';
 
-        $request->save();
+    $request->status_gudang = 'rejected';
+    $request->status_admin = 'rejected';
+    $request->status_super_admin = 'rejected';
 
-        return redirect()->back()->with('error', 'Permintaan ditolak dan proses dihentikan.');
-    }
+    $request->save();
+
+    return redirect()->back()->with('error', 'Permintaan ditolak dan proses dihentikan.');
+}
 }

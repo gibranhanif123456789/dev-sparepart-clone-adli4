@@ -82,15 +82,32 @@
                         <tr>
                             <td><span class="fw-bold">{{ $req->tiket }}</span></td>
                             <td>{{ $req->user->name ?? '-' }}</td>
-                            <td class="d-flex align-items-center gap-2">
-                                <!-- Status Badge -->
-                                <span class="badge 
-                                    @if($req->status_gudang == 'approved') bg-success
-                                    @elseif($req->status_gudang == 'rejected') bg-danger
-                                    @else bg-secondary
-                                    @endif">
-                                    {{ $req->status_gudang == 'approved' ? 'Diterima' : ($req->status_gudang == 'rejected' ? 'Ditolak' : 'Pending') }}
-                                </span>
+                           <td class="d-flex align-items-center gap-2">
+    <!-- Status Badge -->
+    @php
+        $status = '';
+        if ($req->status_gudang === 'approved') {
+            $status = 'Diterima';
+        } elseif ($req->status_gudang === 'rejected') {
+            $status = 'Ditolak';
+        } elseif ($req->status_gudang === 'on progres') {
+            $status = 'On Progress';
+        } elseif ($req->status_gudang === 'pending' && $req->status_ro === 'approved') {
+            $status = 'On Progress';
+        } else {
+            $status = 'Pending';
+        }
+    @endphp
+
+    <span class="badge 
+        @if($req->status_gudang === 'approved') bg-success
+        @elseif($req->status_gudang === 'rejected') bg-danger
+        @elseif($req->status_gudang === 'on progres') bg-warning text-dark
+        @elseif($req->status_gudang === 'pending' && $req->status_ro === 'approved') bg-warning text-dark
+        @else bg-secondary @endif">
+        {{ $status }}
+    </span>
+
 
                                 <!-- 🔹 Ikon Mata - Tracking Approval -->
                                 <button 

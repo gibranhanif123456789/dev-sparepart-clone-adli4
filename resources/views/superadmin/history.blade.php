@@ -79,15 +79,38 @@
                         <tr>
                             <td><span class="fw-bold">{{ $req->tiket }}</span></td>
                             <td>{{ $req->user->name ?? '-' }}</td>
-                            <td class="d-flex align-items-center gap-2">
-                                <!-- Status Badge -->
-                                <span class="badge 
-                                    @if($req->status_super_admin == 'approved') bg-success
-                                    @elseif($req->status_super_admin == 'rejected') bg-danger
-                                    @else bg-secondary
-                                    @endif">
-                                    {{ $req->status_super_admin == 'approved' ? 'Diterima' : ($req->status_super_admin == 'rejected' ? 'Ditolak' : 'Pending') }}
-                                </span>
+                           <td class="d-flex align-items-center gap-2">
+    <!-- Status Badge -->
+    @php
+        $status = '';
+        if ($req->status_super_admin === 'approved') {
+            $status = 'Diterima';
+        } elseif ($req->status_super_admin === 'rejected') {
+            $status = 'Ditolak';
+        } elseif ($req->status_super_admin === 'on progres') {
+            $status = 'On Progress';
+        } elseif ($req->status_super_admin === 'pending' && $req->status_admin === 'approved') {
+            $status = 'On Progress';
+        } else {
+            $status = 'Pending';
+        }
+
+        // Warna badge
+        $bg = '';
+        if ($req->status_super_admin === 'approved') {
+            $bg = 'bg-success';
+        } elseif ($req->status_super_admin === 'rejected') {
+            $bg = 'bg-danger';
+        } elseif ($req->status_super_admin === 'on progres' || ($req->status_super_admin === 'pending' && $req->status_admin === 'approved')) {
+            $bg = 'bg-warning text-dark';
+        } else {
+            $bg = 'bg-secondary';
+        }
+    @endphp
+
+    <span class="badge {{ $bg }}">
+        {{ $status }}
+    </span>
 
                                 <!-- 🔹 Ikon Mata - Tracking Approval -->
                                 <button 
