@@ -82,6 +82,31 @@ function showStatusDetailModal(tiket, userRole) {
             });
 
             html += '</ul>';
+            // 🔥 Tambahkan Status Barang
+if (data.status_barang) {
+    let barangBadgeClass = 'bg-gray-100 text-gray-800';
+    const barangStatus = data.status_barang;
+
+    if (barangStatus === 'on_delivery') {
+        barangBadgeClass = 'bg-blue-100 text-blue-800';
+    } else if (barangStatus === 'diterima') {
+        barangBadgeClass = 'bg-green-100 text-green-800';
+    } else if (barangStatus === 'pending') {
+        barangBadgeClass = 'bg-yellow-100 text-yellow-800';
+    } else if (barangStatus === 'diproses') {
+        barangBadgeClass = 'bg-orange-100 text-orange-800';
+    }
+
+    html += `
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex justify-between items-center">
+                <span class="font-medium">🚚 Status Barang</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium ${barangBadgeClass}">
+                    ${formatBarangStatus(barangStatus)}
+                </span>
+            </div>
+        </div>`;
+}
 
             // Tambahkan catatan jika ada
             if (data.catatan) {
@@ -113,5 +138,16 @@ function formatStatus(status) {
         close: 'Selesai'
     };
     return map[status] || status;
+}
+
+function formatBarangStatus(status) {
+    const map = {
+        pending: 'Pending',
+        'on_delivery': 'On Delivery',
+        diterima: 'Diterima',
+        diproses: 'Diproses',
+        dikirim: 'Dikirim'
+    };
+    return map[status] || status.charAt(0).toUpperCase() + status.slice(1);
 }
 </script>

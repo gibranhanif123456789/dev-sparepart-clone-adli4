@@ -96,6 +96,7 @@ public function reject($id)
     $request->status_gudang = 'rejected';
     $request->status_admin = 'rejected';
     $request->status_super_admin = 'rejected';
+     $request->status_barang = 'rejected';
 
     $request->save();
 

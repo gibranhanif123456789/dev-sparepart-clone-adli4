@@ -20,6 +20,7 @@ class ApprovalStatusController extends Controller
             'gudang'       => $permintaan->status_gudang,
             'admin'        => $permintaan->status_admin,
             'super_admin'  => $permintaan->status_super_admin,
+              'status_barang' => $permintaan->status_barang, //
             'catatan'      => $this->getLastCatatan($permintaan),
         ]);
     }

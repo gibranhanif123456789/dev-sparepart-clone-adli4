@@ -134,16 +134,23 @@ class KepalaGudangController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function rejectGudang($tiket)
-    {
-        $permintaan = Permintaan::where('tiket', $tiket)->firstOrFail();
-        $permintaan->update([
-            'status_gudang' => 'rejected',
-            'status' => 'ditolak', // opsional — untuk konsistensi global
-        ]);
+   public function rejectGudang($tiket)
+{
+    $permintaan = Permintaan::where('tiket', $tiket)->firstOrFail();
 
-        return response()->json(['success' => true]);
-    }
+    // ✅ Broadcast rejected ke semua level + status_barang
+    $permintaan->update([
+        'status_gudang'        => 'rejected',
+        'status_ro'            => 'rejected',
+        'status_admin'         => 'rejected',
+        'status_super_admin'   => 'rejected',
+        'status_barang'        => 'rejected', // 🔥 Penting!
+        'status'               => 'ditolak',
+        'catatan_gudang'       => $catatan ?? 'Ditolak oleh Kepala Gudang',
+    ]);
+
+    return response()->json(['success' => true]);
+}
 
     public function approve(Request $request)
 {
@@ -238,40 +245,46 @@ class KepalaGudangController extends Controller
      * Tolak permintaan
      */
     public function reject(Request $request)
-    {
-        try {
-            $request->validate(['tiket' => 'required|string|exists:permintaan,tiket']);
+{
+    try {
+        $request->validate(['tiket' => 'required|string|exists:permintaan,tiket']);
 
-            $user = Auth::user();
-            if (!$user || $user->role !== 3) {
-                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
-            }
+        $user = Auth::user();
+        if (!$user || $user->role !== 3) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
 
-            $permintaan = Permintaan::where('tiket', $request->tiket)->firstOrFail();
+        $permintaan = Permintaan::where('tiket', $request->tiket)->firstOrFail();
 
-            if ($permintaan->status_gudang !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Permintaan sudah diproses.'
-                ], 400);
-            }
-
-            $permintaan->update([
-                'status_gudang' => 'rejected',
-                'catatan_gudang' => $request->catatan ?? 'Ditolak oleh Kepala Gudang',
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Permintaan berhasil ditolak.'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error("💥 ERROR DI REJECT(): " . $e->getMessage());
+        if ($permintaan->status_gudang !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menolak permintaan.'
-            ], 500);
+                'message' => 'Permintaan sudah diproses.'
+            ], 400);
         }
+
+        // ✅ Broadcast rejected ke semua level
+        $permintaan->update([
+            'status_gudang'        => 'rejected',
+            'status_ro'            => 'rejected',
+            'status_admin'         => 'rejected',
+            'status_super_admin'   => 'rejected',
+            'status_barang'        => 'rejected', // 🔥 Wajib!
+            'catatan_gudang'       => $request->catatan ?? 'Ditolak oleh Kepala Gudang',
+            'status'               => 'ditolak',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permintaan berhasil ditolak.'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error("💥 ERROR DI REJECT(): " . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menolak permintaan.'
+        ], 500);
     }
+}
 
 }
